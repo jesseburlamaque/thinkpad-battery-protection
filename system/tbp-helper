@@ -236,7 +236,7 @@ case "${1:-status}" in
     ;;
 
   *)
-    echo "Usage: thinkcharge-helper {status|get [stop|start|all]|set STOP [START]|apply}" >&2
+    echo "Usage: tbp-helper {status|get [stop|start|all]|set STOP [START]|apply}" >&2
     exit 64
     ;;
 esac

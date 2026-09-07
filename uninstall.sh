@@ -11,8 +11,8 @@ fi
 
 "$script_dir/menu.sh" remove
 
-if [[ -x /usr/local/libexec/thinkcharge-uninstall ]]; then
-  pkexec /usr/local/libexec/thinkcharge-uninstall
+if [[ -x /usr/local/libexec/tbp-uninstall ]]; then
+  pkexec /usr/local/libexec/tbp-uninstall
 fi
 
-echo "ThinkCharge uninstalled."
+echo "ThinkPad Battery Protection uninstalled."

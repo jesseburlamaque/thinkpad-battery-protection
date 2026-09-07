@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly PLUGIN_ID="jesseburlamaque.thinkcharge"
+readonly PLUGIN_ID="jesseburlamaque.thinkpad-battery-protection"
 readonly MENU_BEGIN="// begin $PLUGIN_ID menu entry"
 readonly MENU_END="// end $PLUGIN_ID menu entry"
 readonly MENU_MARKER="$PLUGIN_ID menu entry"
@@ -65,26 +65,25 @@ install_entry() {
     { print }
     !inserted && /^[[:space:]]*\{/ {
       print "  " begin
-      print "  \"trigger.hardware.thinkcharge\": {"
+      print "  \"trigger.hardware.thinkpad-battery-protection\": {"
       print "    \"icon\": \"󱈑\","
-      print "    \"label\": \"ThinkCharge\","
-      print "    \"description\": \"Limiares de carga de bateria ThinkPad\","
-      print "    \"when\": \"omarchy-shell jesseburlamaque.thinkcharge ping\","
-      print "    \"action\": \"omarchy-shell jesseburlamaque.thinkcharge open\""
+      print "    \"label\": \"ThinkPad Battery Protection\","
+      print "    \"description\": \"ThinkPad battery charge thresholds\","
+      print "    \"action\": \"omarchy-shell shell toggle jesseburlamaque.thinkpad-battery-protection\""
       print "  },"
       print "  " end
       inserted = 1
     }
     END { if (!inserted) exit 1 }
   ' "$TEMP_CLEANED" > "$TEMP_STAGED"; then
-    echo "Could not add ThinkCharge to $MENU_FILE" >&2
+    echo "Could not add ThinkPad Battery Protection to $MENU_FILE" >&2
     exit 1
   fi
 
   chmod --reference="$MENU_FILE" "$TEMP_STAGED"
   mv -f -- "$TEMP_STAGED" "$MENU_FILE"
   TEMP_STAGED=""
-  echo "Added ThinkCharge to Trigger > Hardware."
+  echo "Added ThinkPad Battery Protection to Trigger > Hardware."
 }
 
 remove_entry() {
@@ -102,7 +101,7 @@ remove_entry() {
   chmod --reference="$MENU_FILE" "$TEMP_STAGED"
   mv -f -- "$TEMP_STAGED" "$MENU_FILE"
   TEMP_STAGED=""
-  echo "Removed ThinkCharge from Trigger > Hardware."
+  echo "Removed ThinkPad Battery Protection from Trigger > Hardware."
 }
 
 case "${1:-}" in

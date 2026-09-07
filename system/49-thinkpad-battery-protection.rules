@@ -2,7 +2,7 @@ polkit.addRule(function(action, subject) {
   // The root-owned setter independently verifies that its direct caller is the
   // Omarchy Quickshell panel before accepting this passwordless authorization.
   if (action.id == "org.freedesktop.policykit.exec" &&
-      action.lookup("program") == "/usr/local/libexec/thinkcharge-set" &&
+      action.lookup("program") == "/usr/local/libexec/tbp-set" &&
       subject.local && subject.active && subject.isInGroup("wheel")) {
     return polkit.Result.YES;
   }

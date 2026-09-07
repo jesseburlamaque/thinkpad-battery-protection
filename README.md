@@ -1,87 +1,144 @@
-# ThinkCharge 🔴⚡
+# ThinkPad Battery Protection ⚡
 
-Plugin para o **Omarchy** projetado especialmente para **Lenovo ThinkPads**, fornecendo controle fino e intuitivo dos **dois limiares de carga da bateria** (*Dual-Threshold Protection*).
-
----
-
-## 🎯 Por que o ThinkCharge?
-
-A maioria dos notebooks modernos permite apenas definir um limite único de parada (ex: 80%). No entanto, os ThinkPads suportam nativamente dois limiares no Embedded Controller (EC):
-
-1. **Stop Threshold (Limite Máximo):** A bateria interrompe o carregamento ao atingir este valor.
-2. **Start Threshold (Início de Recarga):** A bateria só volta a puxar carga da tomada se a porcentagem cair abaixo deste valor.
-
-Isso elimina os microciclos de recarga contínuos quando o notebook passa o dia inteiro conectado na fonte ou no docking station, prolongando substancialmente a vida útil química das células de lítio.
+An **Omarchy** plugin built specifically for **Lenovo ThinkPads**, providing intuitive, fine-grained control over both **battery charge thresholds** (*Dual-Threshold Protection*).
 
 ---
 
-## ✨ Recursos
+## 🎯 Why ThinkPad Battery Protection?
 
-- **Dois Sliders Dinâmicos:**
-  - **Limite Máximo (Stop):** 45% a 100% (passos de 5%).
-  - **Início de Recarga (Start):** 40% a 95% (passos de 5%).
-- **Lógica Anti-Erro Inteligente (Constraint Synchronization):**
-  - O firmware do ThinkPad exige que `Start < Stop`.
-  - Se você puxar o slider de parada para baixo, o início é reduzido automaticamente com a margem de segurança.
-  - Se puxar o início para cima, o limite de parada avança automaticamente.
-  - Impossível aplicar um estado inválido no hardware!
-- **Feedback em Linguagem Natural:** Exibe em tempo real o que o ThinkPad fará (ex: *"Carrega até 85% e só volta a recarregar abaixo de 75%"*).
-- **Presets Rápidos com 1 Clique:**
-  - **Dock (50–60%):** Máxima preservação para computadores quase sempre na tomada.
-  - **Equilibrado (75–85%):** Uso diário ideal, unindo longevidade e autonomia.
-  - **Viagem (95–100%):** Carga total sob demanda para saídas e viagens.
-- **Integração Completa ao Omarchy:**
-  - Acesso pelo clique no ícone da barra (`󱈑` com o ponto vermelho característico dos ThinkPads).
-  - Acesso direto pelo menu do Omarchy (**Trigger → Hardware → ThinkCharge**).
-  - Pop-up responsivo na barra ou painel centralizado caso o ícone esteja oculto.
-  - Serviço systemd automático para persistência entre reboots.
+Most modern laptops only support a single charge stop limit (e.g., 80%). ThinkPads natively support two hardware thresholds via their Embedded Controller (EC):
+
+1. **Stop Threshold (Charge Limit):** The battery stops charging when it reaches this value.
+2. **Start Threshold (Recharge Below):** The battery only starts drawing power from the adapter once it drops below this value.
+
+This eliminates the micro charge cycles that occur when the laptop stays plugged in all day, significantly extending the long-term health of the lithium cells.
 
 ---
 
-## 📦 Instalação
+## ✨ Features
 
-Como o projeto está na sua pasta `~/Projects/omarchy-thinkcharge`:
+- **Two Dynamic Sliders:**
+  - **Stop Threshold:** 45% to 100% (in 5% steps).
+  - **Start Threshold:** 40% to 95% (in 5% steps).
+- **Smart Anti-Error Logic (Constraint Synchronization):**
+  - The ThinkPad firmware requires `Start < Stop` at all times.
+  - Dragging Stop down automatically lowers Start to maintain the safe margin.
+  - Dragging Start up automatically raises Stop accordingly.
+  - It is impossible to apply an invalid state to the hardware.
+- **Natural Language Feedback:** Displays in real time what the ThinkPad will do (e.g., *"Charges to 85%, recharges below 75%"*).
+- **Quick Presets with One Click:**
+  - **Dock (50–60%):** Maximum preservation for laptops mostly plugged into a dock.
+  - **Balanced (75–85%):** Great balance of daily runtime and battery longevity.
+  - **Travel (95–100%):** Full charge on demand for trips away from the desk.
+- **Full Omarchy Integration:**
+  - Open from the Omarchy menu (**Trigger → Hardware → ThinkPad Battery Protection**).
+  - Floating, centered overlay — no bar icon required.
+  - Systemd service automatically restores thresholds after reboot.
 
-1. **Vincular o plugin ao Omarchy:**
+---
+
+## 🖥️ Supported Devices
+
+### Lenovo ThinkPads (Dual Threshold: Start + Stop)
+
+ThinkPad Battery Protection is designed for ThinkPads that expose both
+`charge_control_start_threshold` and `charge_control_end_threshold` via the
+`thinkpad_acpi` kernel driver. In general, **all ThinkPads from the Sandy Bridge
+generation (2011) onwards** are supported.
+
+| Series | Example Models | Dual Threshold |
+|--------|---------------|:--------------:|
+| **T-series** | T14, T14s, T16, T480, T490, T580 | ✅ |
+| **X-series** | X1 Carbon, X1 Extreme, X1 Nano, X1 Yoga, X13 | ✅ |
+| **P-series** | P14s, P15, P16, P50, P51, P52, P53, P72 | ✅ |
+| **L-series** | L14, L15, L380, L390, L480, L490, L580 | ✅ |
+| **E-series** | E14, E15, E16, E480, E490, E580 | ⚠️ Most work; some models report slightly different values due to EC firmware quirks — limits are still honored |
+| **ThinkBook** | ThinkBook 14, 16 | ❌ Different EC; no dual threshold support |
+| **Pre-2011 models** | T420, X220 and older | ❌ thinkpad_acpi does not expose sysfs thresholds |
+
+### Other Brands (Stop Threshold Only)
+
+The plugin gracefully degrades on non-ThinkPad hardware. When only a stop
+threshold is available, the start slider is automatically hidden and only the
+charge limit is shown.
+
+| Brand | Driver | Stop Threshold | Start Threshold |
+|-------|--------|:--------------:|:---------------:|
+| **ASUS** (VivoBook, ROG, ZenBook) | `asus_wmi` | ✅ | ❌ |
+| **Framework** | `cros_ec` | ✅ (BIOS ≥ 3.04) | ❌ |
+| **Dell** (XPS, Latitude) | `dell_smm` / SMBIOS | ✅ (varies) | ❌ |
+| **Huawei MateBook** | `huawei_wmi` | ✅ | ⚠️ Some models |
+| **Samsung** | `samsung_laptop` | ⚠️ Limited | ❌ |
+| **LG Gram** | `lg_laptop` | ⚠️ Limited | ❌ |
+| **System76** | `system76` | ✅ | ❌ |
+| **Tuxedo** | `tuxedo_*` | ✅ | ❌ |
+| **MSI** | — | ❌ | ❌ |
+| **Sony** | — | ❌ | ❌ |
+
+### How to Check Your Device
+
+```bash
+ls /sys/class/power_supply/BAT*/charge_control_*threshold
+```
+
+- **Two files** (`start` + `end`) → full dual-threshold support.
+- **One file** (`end` only) → stop-only mode, start slider will be hidden.
+- **No files** → your hardware does not expose charge control to the kernel.
+
+### 🐛 Found an Issue?
+
+If your device is listed as compatible but behaves unexpectedly, or if you
+successfully use this plugin on a device not listed above, please
+[open an issue](https://github.com/jesseburlamaque/thinkpad-battery-protection/issues)
+so we can update this table and improve the plugin for everyone.
+
+---
+
+## 📦 Installation
+
+The project lives in `~/Projects/thinkpad-battery-protection`:
+
+1. **Link the plugin to Omarchy:**
    ```bash
-   ln -s ~/Projects/omarchy-thinkcharge ~/.config/omarchy/plugins/jesseburlamaque.thinkcharge
+   ln -s ~/Projects/thinkpad-battery-protection ~/.config/omarchy/plugins/jesseburlamaque.thinkpad-battery-protection
    ```
 
-2. **Instalar os componentes do sistema (regras Polkit e serviço systemd):**
+2. **Install the system components (Polkit rules and systemd service):**
    ```bash
-   cd ~/Projects/omarchy-thinkcharge
+   cd ~/Projects/thinkpad-battery-protection
    ./install.sh
    ```
 
-3. **Recarregar os plugins no Omarchy Shell:**
+3. **Reload the Omarchy shell:**
    ```bash
    omarchy-shell shell rescanPlugins
    ```
 
 ---
 
-## 💻 Uso
+## 💻 Usage
 
-- **Abrir a interface gráfica:**
+- **Open the graphical interface:**
   ```bash
-  omarchy-shell jesseburlamaque.thinkcharge open
+  omarchy-shell jesseburlamaque.thinkpad-battery-protection open
   ```
-  *(Ou abra pelo menu Trigger > Hardware > ThinkCharge)*.
+  *(Or open from the menu: Trigger → Hardware → ThinkPad Battery Protection)*
 
-- **Consultar status via terminal:**
+- **Check status from the terminal:**
   ```bash
-  /usr/local/libexec/thinkcharge-helper status
+  /usr/local/libexec/tbp-helper status
   ```
 
-- **Alterar via terminal (como root):**
+- **Set thresholds from the terminal (as root):**
   ```bash
-  sudo /usr/local/libexec/thinkcharge-helper set <STOP> <START>
-  # Exemplo:
-  sudo /usr/local/libexec/thinkcharge-helper set 85 75
+  sudo /usr/local/libexec/tbp-helper set <STOP> <START>
+  # Example:
+  sudo /usr/local/libexec/tbp-helper set 85 75
   ```
 
 ---
 
-## 📄 Licença
+## 📄 License
 
 MIT License.
+

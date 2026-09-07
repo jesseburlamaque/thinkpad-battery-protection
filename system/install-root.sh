@@ -20,20 +20,20 @@ install -d -m 0755 /usr/local/libexec
 install -d -m 0755 /etc/systemd/system
 install -d -m 0755 /etc/polkit-1/rules.d
 
-install -m 0755 "$source_dir/system/thinkcharge-helper" /usr/local/libexec/thinkcharge-helper
-install -m 0755 "$source_dir/system/thinkcharge-set" /usr/local/libexec/thinkcharge-set
-install -m 0755 "$source_dir/system/thinkcharge-uninstall" /usr/local/libexec/thinkcharge-uninstall
-install -m 0644 "$source_dir/system/thinkcharge.service" /etc/systemd/system/thinkcharge.service
-install -m 0644 "$source_dir/system/49-thinkcharge.rules" /etc/polkit-1/rules.d/49-thinkcharge.rules
+install -m 0755 "$source_dir/system/tbp-helper" /usr/local/libexec/tbp-helper
+install -m 0755 "$source_dir/system/tbp-set" /usr/local/libexec/tbp-set
+install -m 0755 "$source_dir/system/tbp-uninstall" /usr/local/libexec/tbp-uninstall
+install -m 0644 "$source_dir/system/thinkpad-battery-protection.service" /etc/systemd/system/thinkpad-battery-protection.service
+install -m 0644 "$source_dir/system/49-thinkpad-battery-protection.rules" /etc/polkit-1/rules.d/49-thinkpad-battery-protection.rules
 
 # If configuration does not exist, initialize it
-if [[ ! -f /etc/thinkcharge.conf ]]; then
-  /usr/local/libexec/thinkcharge-helper set "$initial_stop" "$initial_start"
+if [[ ! -f /etc/thinkpad-battery-protection.conf ]]; then
+  /usr/local/libexec/tbp-helper set "$initial_stop" "$initial_start"
 else
-  /usr/local/libexec/thinkcharge-helper apply
+  /usr/local/libexec/tbp-helper apply
 fi
 
 systemctl daemon-reload
-systemctl enable --now thinkcharge.service
+systemctl enable --now thinkpad-battery-protection.service
 
-echo "ThinkCharge installed and enabled successfully."
+echo "ThinkPad Battery Protection installed and enabled successfully."

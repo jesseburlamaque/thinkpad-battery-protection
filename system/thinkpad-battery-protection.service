@@ -6,7 +6,7 @@ StartLimitBurst=6
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/libexec/thinkcharge-helper apply
+ExecStart=/usr/local/libexec/tbp-helper apply
 RemainAfterExit=yes
 Restart=on-failure
 RestartSec=5

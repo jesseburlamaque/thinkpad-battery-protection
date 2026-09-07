@@ -15,7 +15,7 @@ fi
 # pkexec preserves the direct parent, so accept only the installed Omarchy shell
 # running its system configuration on behalf of the authenticated desktop user.
 if [[ ! ${PKEXEC_UID:-} =~ ^[0-9]+$ ]]; then
-  echo "This operation is available only from the ThinkCharge panel" >&2
+  echo "This operation is available only from the ThinkPad Battery Protection panel" >&2
   exit 77
 fi
 
@@ -36,12 +36,12 @@ for (( index = 0; index + 1 < ${#caller_args[@]}; index++ )); do
 done
 
 if [[ $caller_exe != "$OMARCHY_SHELL" || $caller_uid != "$PKEXEC_UID" || $valid_shell_config != 1 ]]; then
-  echo "This operation is available only from the ThinkCharge panel" >&2
+  echo "This operation is available only from the ThinkPad Battery Protection panel" >&2
   exit 77
 fi
 
 if (( $# < 1 || $# > 2 )); then
-  echo "Usage: thinkcharge-set STOP [START]" >&2
+  echo "Usage: tbp-set STOP [START]" >&2
   exit 64
 fi
 

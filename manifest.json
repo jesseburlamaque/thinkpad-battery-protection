@@ -1,22 +1,16 @@
 {
   "schemaVersion": 1,
-  "id": "jesseburlamaque.thinkcharge",
-  "name": "ThinkCharge",
+  "id": "jesseburlamaque.thinkpad-battery-protection",
+  "name": "ThinkPad Battery Protection",
   "version": "1.0.0",
   "author": "Jesse Burlamaque",
   "license": "MIT",
-  "description": "Controle de limiares duplos de carga de bateria para ThinkPads no Omarchy.",
+  "description": "Floating panel for controlling ThinkPad battery charge thresholds in Omarchy.",
   "kinds": [
-    "bar-widget"
+    "overlay"
   ],
+  "keepLoaded": true,
   "entryPoints": {
-    "barWidget": "Panel.qml"
-  },
-  "barWidget": {
-    "displayName": "ThinkCharge",
-    "description": "Controle de limiares de carga de bateria ThinkPad",
-    "category": "System",
-    "allowMultiple": false,
-    "defaultSection": "right"
+    "overlay": "Panel.qml"
   }
 }
