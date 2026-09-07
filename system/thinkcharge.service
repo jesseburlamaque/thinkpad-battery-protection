@@ -1,0 +1,27 @@
+[Unit]
+Description=Restore ThinkPad Battery Charge Thresholds
+After=systemd-modules-load.service
+StartLimitIntervalSec=60
+StartLimitBurst=6
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/thinkcharge-helper apply
+RemainAfterExit=yes
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectControlGroups=yes
+ProtectKernelLogs=yes
+ProtectClock=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

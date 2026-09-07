@@ -1,0 +1,242 @@
+#!/usr/bin/bash
+
+set -euo pipefail
+
+readonly CONFIG_FILE="/etc/thinkcharge.conf"
+readonly LEGACY_CONFIG_FILE="/etc/omarchy-battery-health.conf"
+readonly POWER_SUPPLY_ROOT="/sys/class/power_supply"
+readonly DEFAULT_STOP=85
+readonly DEFAULT_START=75
+
+BATTERY_DIR=""
+STOP_THRESHOLD_FILE=""
+START_THRESHOLD_FILE=""
+CAPACITY_FILE=""
+STATUS_FILE=""
+
+resolve_battery() {
+  local candidate=""
+  local supply_type=""
+
+  for candidate in "$POWER_SUPPLY_ROOT"/*; do
+    [[ -d $candidate && -r $candidate/type ]] || continue
+    IFS= read -r supply_type < "$candidate/type" || continue
+    [[ $supply_type == "Battery" ]] || continue
+
+    if [[ -e $candidate/charge_control_end_threshold ]]; then
+      STOP_THRESHOLD_FILE="$candidate/charge_control_end_threshold"
+    elif [[ -e $candidate/charge_stop_threshold ]]; then
+      STOP_THRESHOLD_FILE="$candidate/charge_stop_threshold"
+    fi
+
+    if [[ -e $candidate/charge_control_start_threshold ]]; then
+      START_THRESHOLD_FILE="$candidate/charge_control_start_threshold"
+    elif [[ -e $candidate/charge_start_threshold ]]; then
+      START_THRESHOLD_FILE="$candidate/charge_start_threshold"
+    fi
+
+    if [[ -n $STOP_THRESHOLD_FILE ]]; then
+      BATTERY_DIR="$candidate"
+      CAPACITY_FILE="$candidate/capacity"
+      STATUS_FILE="$candidate/status"
+      return 0
+    fi
+  done
+  return 1
+}
+
+resolve_battery || true
+
+valid_stop_limit() {
+  [[ ${1:-} =~ ^[0-9]+$ ]] && (( $1 >= 40 && $1 <= 100 ))
+}
+
+valid_start_limit() {
+  [[ ${1:-} =~ ^[0-9]+$ ]] && (( $1 >= 0 && $1 <= 95 ))
+}
+
+read_config_files() {
+  local stop_val=""
+  local start_val=""
+
+  if [[ -r $CONFIG_FILE ]]; then
+    {
+      IFS= read -r stop_val || true
+      IFS= read -r start_val || true
+    } < "$CONFIG_FILE"
+  elif [[ -r $LEGACY_CONFIG_FILE ]]; then
+    {
+      IFS= read -r stop_val || true
+      IFS= read -r start_val || true
+    } < "$LEGACY_CONFIG_FILE"
+  fi
+
+  printf '%s\n%s\n' "$stop_val" "$start_val"
+}
+
+configured_stop_limit() {
+  local stop_val=""
+  local start_val=""
+  {
+    IFS= read -r stop_val || true
+    IFS= read -r start_val || true
+  } < <(read_config_files)
+
+  if valid_stop_limit "$stop_val"; then
+    printf '%s\n' "$stop_val"
+  else
+    printf '%s\n' "$DEFAULT_STOP"
+  fi
+}
+
+configured_start_limit() {
+  local stop_val=""
+  local start_val=""
+  {
+    IFS= read -r stop_val || true
+    IFS= read -r start_val || true
+  } < <(read_config_files)
+
+  if valid_start_limit "$start_val"; then
+    printf '%s\n' "$start_val"
+  else
+    printf '%s\n' "$DEFAULT_START"
+  fi
+}
+
+require_root() {
+  if (( EUID != 0 )); then
+    echo "This operation requires root privileges" >&2
+    exit 77
+  fi
+}
+
+write_thresholds() {
+  local stop_limit="$1"
+  local start_limit="${2:-}"
+
+  if [[ -z $STOP_THRESHOLD_FILE || ! -w $STOP_THRESHOLD_FILE ]]; then
+    echo "No writable battery charge-control interface is available" >&2
+    exit 1
+  fi
+
+  local current_stop=100
+  [[ -r $STOP_THRESHOLD_FILE ]] && current_stop=$(<"$STOP_THRESHOLD_FILE")
+
+  if [[ -n $START_THRESHOLD_FILE && -w $START_THRESHOLD_FILE && -n $start_limit ]]; then
+    # ThinkPad EC / sysfs requires start <= stop at all times.
+    # If increasing start above current stop, raise stop first.
+    # If decreasing stop below current start, lower start first.
+    if (( start_limit > current_stop )); then
+      printf '%s\n' "$stop_limit" > "$STOP_THRESHOLD_FILE"
+      printf '%s\n' "$start_limit" > "$START_THRESHOLD_FILE"
+    else
+      printf '%s\n' "$start_limit" > "$START_THRESHOLD_FILE"
+      printf '%s\n' "$stop_limit" > "$STOP_THRESHOLD_FILE"
+    fi
+  else
+    printf '%s\n' "$stop_limit" > "$STOP_THRESHOLD_FILE"
+  fi
+}
+
+write_config() {
+  local stop_limit="$1"
+  local start_limit="${2:-}"
+  local staged=""
+
+  staged=$(mktemp /etc/.thinkcharge.conf.XXXXXX)
+  {
+    printf '%s\n' "$stop_limit"
+    if [[ -n $start_limit ]]; then
+      printf '%s\n' "$start_limit"
+    fi
+  } > "$staged"
+
+  if ! chmod 0644 "$staged" || ! mv -f -- "$staged" "$CONFIG_FILE"; then
+    rm -f -- "$staged"
+    return 1
+  fi
+
+  # Also update legacy file if it exists for backwards compatibility
+  if [[ -w $LEGACY_CONFIG_FILE || ! -e $LEGACY_CONFIG_FILE ]]; then
+    cp -f -- "$CONFIG_FILE" "$LEGACY_CONFIG_FILE" 2>/dev/null || true
+  fi
+}
+
+case "${1:-status}" in
+  status)
+    (( $# <= 1 )) || { echo "status takes no arguments" >&2; exit 64; }
+    printf 'available\t%s\n' "$([[ -n $STOP_THRESHOLD_FILE && -r $STOP_THRESHOLD_FILE ]] && echo 1 || echo 0)"
+    printf 'thinkpad_mode\t%s\n' "$([[ -n $START_THRESHOLD_FILE && -r $START_THRESHOLD_FILE ]] && echo 1 || echo 0)"
+    printf 'configured_stop\t%s\n' "$(configured_stop_limit)"
+    printf 'configured_start\t%s\n' "$(configured_start_limit)"
+    if [[ -n $STOP_THRESHOLD_FILE && -r $STOP_THRESHOLD_FILE ]]; then
+      printf 'applied_stop\t%s\n' "$(<"$STOP_THRESHOLD_FILE")"
+    fi
+    if [[ -n $START_THRESHOLD_FILE && -r $START_THRESHOLD_FILE ]]; then
+      printf 'applied_start\t%s\n' "$(<"$START_THRESHOLD_FILE")"
+    fi
+    if [[ -n $CAPACITY_FILE && -r $CAPACITY_FILE ]]; then
+      printf 'capacity\t%s\n' "$(<"$CAPACITY_FILE")"
+    fi
+    if [[ -n $STATUS_FILE && -r $STATUS_FILE ]]; then
+      printf 'battery_status\t%s\n' "$(<"$STATUS_FILE")"
+    fi
+    ;;
+
+  get)
+    case "${2:-stop}" in
+      stop) configured_stop_limit ;;
+      start) configured_start_limit ;;
+      all)
+        printf '%s %s\n' "$(configured_stop_limit)" "$(configured_start_limit)"
+        ;;
+      *)
+        configured_stop_limit
+        ;;
+    esac
+    ;;
+
+  set)
+    require_root
+    (( $# >= 2 && $# <= 3 )) || { echo "Usage: set STOP_LIMIT [START_LIMIT]" >&2; exit 64; }
+    stop_limit="${2:-}"
+    start_limit="${3:-}"
+
+    if ! valid_stop_limit "$stop_limit"; then
+      echo "Charge stop limit must be an integer from 40 to 100" >&2
+      exit 64
+    fi
+
+    if [[ -n $start_limit ]]; then
+      if ! valid_start_limit "$start_limit"; then
+        echo "Charge start limit must be an integer from 0 to 95" >&2
+        exit 64
+      fi
+    else
+      start_limit="$(configured_start_limit)"
+    fi
+
+    # Ensure start < stop
+    if (( start_limit >= stop_limit )); then
+      start_limit=$(( stop_limit - 5 ))
+      if (( start_limit < 0 )); then
+        start_limit=0
+      fi
+    fi
+
+    write_thresholds "$stop_limit" "$start_limit"
+    write_config "$stop_limit" "$start_limit"
+    ;;
+
+  apply)
+    require_root
+    (( $# == 1 )) || { echo "apply takes no arguments" >&2; exit 64; }
+    write_thresholds "$(configured_stop_limit)" "$(configured_start_limit)"
+    ;;
+
+  *)
+    echo "Usage: thinkcharge-helper {status|get [stop|start|all]|set STOP [START]|apply}" >&2
+    exit 64
+    ;;
+esac

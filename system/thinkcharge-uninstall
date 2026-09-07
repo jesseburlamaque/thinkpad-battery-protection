@@ -1,0 +1,20 @@
+#!/usr/bin/bash
+
+set -euo pipefail
+
+if (( EUID != 0 )); then
+  echo "This operation requires root privileges" >&2
+  exit 77
+fi
+
+systemctl disable --now thinkcharge.service 2>/dev/null || true
+rm -f -- /etc/systemd/system/thinkcharge.service
+systemctl daemon-reload 2>/dev/null || true
+
+rm -f -- /etc/polkit-1/rules.d/49-thinkcharge.rules
+rm -f -- /usr/local/libexec/thinkcharge-helper
+rm -f -- /usr/local/libexec/thinkcharge-set
+rm -f -- /usr/local/libexec/thinkcharge-uninstall
+rm -f -- /etc/thinkcharge.conf
+
+echo "ThinkCharge system components removed successfully."

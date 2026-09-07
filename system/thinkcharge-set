@@ -1,0 +1,62 @@
+#!/usr/bin/bash
+
+set -euo pipefail
+
+readonly HELPER="/usr/local/libexec/thinkcharge-helper"
+readonly OMARCHY_SHELL="/usr/bin/quickshell"
+readonly OMARCHY_SHELL_CONFIG="/usr/share/omarchy/shell"
+
+if (( EUID != 0 )); then
+  echo "This operation requires root privileges" >&2
+  exit 77
+fi
+
+# This helper is the passwordless panel path, not a general-purpose command.
+# pkexec preserves the direct parent, so accept only the installed Omarchy shell
+# running its system configuration on behalf of the authenticated desktop user.
+if [[ ! ${PKEXEC_UID:-} =~ ^[0-9]+$ ]]; then
+  echo "This operation is available only from the ThinkCharge panel" >&2
+  exit 77
+fi
+
+caller_pid=$PPID
+caller_exe=$(readlink -f -- "/proc/$caller_pid/exe" 2>/dev/null || true)
+caller_uid=$(stat -c %u -- "/proc/$caller_pid" 2>/dev/null || true)
+caller_args=()
+while IFS= read -r -d '' argument; do
+  caller_args+=("$argument")
+done < "/proc/$caller_pid/cmdline"
+
+valid_shell_config=0
+for (( index = 0; index + 1 < ${#caller_args[@]}; index++ )); do
+  if [[ ${caller_args[$index]} == "-p" && ${caller_args[$((index + 1))]} == "$OMARCHY_SHELL_CONFIG" ]]; then
+    valid_shell_config=1
+    break
+  fi
+done
+
+if [[ $caller_exe != "$OMARCHY_SHELL" || $caller_uid != "$PKEXEC_UID" || $valid_shell_config != 1 ]]; then
+  echo "This operation is available only from the ThinkCharge panel" >&2
+  exit 77
+fi
+
+if (( $# < 1 || $# > 2 )); then
+  echo "Usage: thinkcharge-set STOP [START]" >&2
+  exit 64
+fi
+
+stop="$1"
+if [[ ! $stop =~ ^[0-9]+$ ]] || (( stop < 40 || stop > 100 || stop % 5 != 0 )); then
+  echo "Charge stop limit must be 40 through 100 in 5% steps" >&2
+  exit 64
+fi
+
+if (( $# == 2 )); then
+  start="$2"
+  if [[ ! $start =~ ^[0-9]+$ ]] || (( start < 0 || start > 95 || start % 5 != 0 )); then
+    echo "Charge start limit must be 0 through 95 in 5% steps" >&2
+    exit 64
+  fi
+fi
+
+exec "$HELPER" set "$@"

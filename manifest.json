@@ -1,20 +1,20 @@
 {
   "schemaVersion": 1,
-  "id": "andrewf.battery-protection",
-  "name": "Battery Protection",
-  "version": "1.0.6",
-  "author": "Andrii F",
+  "id": "jesseburlamaque.thinkcharge",
+  "name": "ThinkCharge",
+  "version": "1.0.0",
+  "author": "Jesse Burlamaque",
   "license": "MIT",
-  "description": "Toggle UPower's configured battery charge limit from Trigger or an optional bar icon.",
+  "description": "Controle de limiares duplos de carga de bateria para ThinkPads no Omarchy.",
   "kinds": [
     "bar-widget"
   ],
   "entryPoints": {
-    "barWidget": "BarWidget.qml"
+    "barWidget": "Panel.qml"
   },
   "barWidget": {
-    "displayName": "Battery Protection",
-    "description": "Toggle the UPower battery charge limit",
+    "displayName": "ThinkCharge",
+    "description": "Controle de limiares de carga de bateria ThinkPad",
     "category": "System",
     "allowMultiple": false,
     "defaultSection": "right"

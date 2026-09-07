@@ -1,109 +1,87 @@
-# Omarchy Battery Protection
+# ThinkCharge 🔴⚡
 
-An Omarchy Quattro plugin for switching between UPower's protected charging
-limit and normal full-capacity charging from Trigger → Hardware, with an
-optional bar icon that is hidden by default.
+Plugin para o **Omarchy** projetado especialmente para **Lenovo ThinkPads**, fornecendo controle fino e intuitivo dos **dois limiares de carga da bateria** (*Dual-Threshold Protection*).
 
-![Battery Protection preview](preview.png)
+---
 
-## Features
+## 🎯 Por que o ThinkCharge?
 
-- Uses UPower's standard D-Bus API.
-- Battery Protection entry under Trigger → Hardware.
-- Optional bar icon, hidden by default with remembered visibility.
-- Shows `battery-lock` while protection is enabled.
-- Shows `battery-lock-open` while protection is disabled.
-- Provides a tooltip with the current state and configured limit.
-- Updates the visible icon immediately after UPower confirms a change.
-- Shows the applied mode and current limit in a Trigger-menu notification.
-- Hides itself when UPower reports that charge limiting is unsupported.
+A maioria dos notebooks modernos permite apenas definir um limite único de parada (ex: 80%). No entanto, os ThinkPads suportam nativamente dois limiares no Embedded Controller (EC):
 
-## Requirements
+1. **Stop Threshold (Limite Máximo):** A bateria interrompe o carregamento ao atingir este valor.
+2. **Start Threshold (Início de Recarga):** A bateria só volta a puxar carga da tomada se a porcentagem cair abaixo deste valor.
 
-- Omarchy Quattro.
-- UPower with `EnableChargeThreshold` support.
-- A battery and Linux driver for which UPower reports
-  `ChargeThresholdSupported: true`.
-- A charge threshold configured by the system hardware database or firmware.
+Isso elimina os microciclos de recarga contínuos quando o notebook passa o dia inteiro conectado na fonte ou no docking station, prolongando substancialmente a vida útil química das células de lítio.
 
-Check support and the configured threshold:
+---
 
-```sh
-upower --battery | grep -E 'charge-threshold|charge-end-threshold'
-```
+## ✨ Recursos
 
-UPower exposes the configured threshold as an on/off feature. This plugin does
-not choose the percentage: enabling protection selects the limit configured by
-the system, while disabling it restores full charging. The icon tooltip shows
-the configured limit reported by UPower.
+- **Dois Sliders Dinâmicos:**
+  - **Limite Máximo (Stop):** 45% a 100% (passos de 5%).
+  - **Início de Recarga (Start):** 40% a 95% (passos de 5%).
+- **Lógica Anti-Erro Inteligente (Constraint Synchronization):**
+  - O firmware do ThinkPad exige que `Start < Stop`.
+  - Se você puxar o slider de parada para baixo, o início é reduzido automaticamente com a margem de segurança.
+  - Se puxar o início para cima, o limite de parada avança automaticamente.
+  - Impossível aplicar um estado inválido no hardware!
+- **Feedback em Linguagem Natural:** Exibe em tempo real o que o ThinkPad fará (ex: *"Carrega até 85% e só volta a recarregar abaixo de 75%"*).
+- **Presets Rápidos com 1 Clique:**
+  - **Dock (50–60%):** Máxima preservação para computadores quase sempre na tomada.
+  - **Equilibrado (75–85%):** Uso diário ideal, unindo longevidade e autonomia.
+  - **Viagem (95–100%):** Carga total sob demanda para saídas e viagens.
+- **Integração Completa ao Omarchy:**
+  - Acesso pelo clique no ícone da barra (`󱈑` com o ponto vermelho característico dos ThinkPads).
+  - Acesso direto pelo menu do Omarchy (**Trigger → Hardware → ThinkCharge**).
+  - Pop-up responsivo na barra ou painel centralizado caso o ícone esteja oculto.
+  - Serviço systemd automático para persistência entre reboots.
 
-## Install
+---
 
-Install and enable the plugin from GitHub:
+## 📦 Instalação
 
-```sh
-omarchy plugin add https://github.com/andrewf403/omarchy-battery-protection.git --enable
-```
+Como o projeto está na sua pasta `~/Projects/omarchy-thinkcharge`:
 
-Add the Battery Protection entry to Trigger → Hardware:
+1. **Vincular o plugin ao Omarchy:**
+   ```bash
+   ln -s ~/Projects/omarchy-thinkcharge ~/.config/omarchy/plugins/jesseburlamaque.thinkcharge
+   ```
 
-```sh
-~/.config/omarchy/plugins/andrewf.battery-protection/install.sh
-```
+2. **Instalar os componentes do sistema (regras Polkit e serviço systemd):**
+   ```bash
+   cd ~/Projects/omarchy-thinkcharge
+   ./install.sh
+   ```
 
-The widget is placed immediately before Omarchy's battery widget. Its icon is
-hidden by default.
+3. **Recarregar os plugins no Omarchy Shell:**
+   ```bash
+   omarchy-shell shell rescanPlugins
+   ```
 
-## Usage
+---
 
-Select Trigger → Hardware → Battery Protection, or click the bar icon, to
-toggle the configured charge limit. Trigger-menu changes show a notification
-with the applied mode and charge limit.
+## 💻 Uso
 
-When visible, the bar icon indicates the current state without changing color:
+- **Abrir a interface gráfica:**
+  ```bash
+  omarchy-shell jesseburlamaque.thinkcharge open
+  ```
+  *(Ou abra pelo menu Trigger > Hardware > ThinkCharge)*.
 
-- `battery-lock` — protection is enabled; clicking disables it.
-- `battery-lock-open` — protection is disabled; clicking enables it.
+- **Consultar status via terminal:**
+  ```bash
+  /usr/local/libexec/thinkcharge-helper status
+  ```
 
-Toggle the optional icon from the command line:
+- **Alterar via terminal (como root):**
+  ```bash
+  sudo /usr/local/libexec/thinkcharge-helper set <STOP> <START>
+  # Exemplo:
+  sudo /usr/local/libexec/thinkcharge-helper set 85 75
+  ```
 
-```sh
-omarchy-shell andrewf.battery-protection toggleIcon
-```
+---
 
-You can also control or query it explicitly:
+## 📄 Licença
 
-```sh
-omarchy-shell andrewf.battery-protection showIcon
-omarchy-shell andrewf.battery-protection hideIcon
-omarchy-shell andrewf.battery-protection getIconVisible
-```
-
-Icon visibility is saved as `showIcon` on the widget entry in
-`~/.config/omarchy/shell.json` and is preserved across shell restarts.
-
-The bundled helper can also query or change the standard UPower state directly:
-
-```sh
-~/.config/omarchy/plugins/andrewf.battery-protection/battery-protection status
-~/.config/omarchy/plugins/andrewf.battery-protection/battery-protection enable
-~/.config/omarchy/plugins/andrewf.battery-protection/battery-protection disable
-~/.config/omarchy/plugins/andrewf.battery-protection/battery-protection toggle
-```
-
-## Remove
-
-If protection is enabled and you want to restore normal full-capacity charging,
-toggle it off before removal. Remove the Trigger entry, then remove the plugin:
-
-```sh
-~/.config/omarchy/plugins/andrewf.battery-protection/uninstall.sh
-omarchy plugin remove andrewf.battery-protection
-```
-
-The first command removes only the menu integration. The second removes the
-widget and its bundled helper.
-
-## License
-
-MIT
+MIT License.
