@@ -340,7 +340,6 @@ Panel {
             id: heroPercent
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            horizontalAlignment: Text.AlignRight
             spacing: Style.space(1)
 
             Text {
