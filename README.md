@@ -1,10 +1,10 @@
-# ThinkPad Battery Protection ⚡
+# ThinkPad Battery Protection
 
 An **Omarchy** plugin built specifically for **Lenovo ThinkPads**, providing intuitive, fine-grained control over both **battery charge thresholds** (*Dual-Threshold Protection*).
 
 ---
 
-## 🎯 Why ThinkPad Battery Protection?
+## Why ThinkPad Battery Protection?
 
 Most modern laptops only support a single charge stop limit (e.g., 80%). ThinkPads natively support two hardware thresholds via their Embedded Controller (EC):
 
@@ -15,7 +15,7 @@ This eliminates the micro charge cycles that occur when the laptop stays plugged
 
 ---
 
-## ✨ Features
+## Features
 
 - **Two Dynamic Sliders:**
   - **Stop Threshold:** 45% to 100% (in 5% steps).
@@ -37,7 +37,7 @@ This eliminates the micro charge cycles that occur when the laptop stays plugged
 
 ---
 
-## 🖥️ Supported Devices
+## Supported Devices
 
 ### Lenovo ThinkPads (Dual Threshold: Start + Stop)
 
@@ -85,7 +85,7 @@ ls /sys/class/power_supply/BAT*/charge_control_*threshold
 - **One file** (`end` only) → stop-only mode, start slider will be hidden.
 - **No files** → your hardware does not expose charge control to the kernel.
 
-### 🐛 Found an Issue?
+### Found an Issue?
 
 If your device is listed as compatible but behaves unexpectedly, or if you
 successfully use this plugin on a device not listed above, please
@@ -94,7 +94,7 @@ so we can update this table and improve the plugin for everyone.
 
 ---
 
-## 📦 Installation
+## Installation
 
 The project lives in `~/Projects/thinkpad-battery-protection`:
 
@@ -116,7 +116,7 @@ The project lives in `~/Projects/thinkpad-battery-protection`:
 
 ---
 
-## 💻 Usage
+## Usage
 
 - **Open the graphical interface:**
   ```bash
@@ -138,7 +138,7 @@ The project lives in `~/Projects/thinkpad-battery-protection`:
 
 ---
 
-## 📄 License
+## License
 
 MIT License.
 
