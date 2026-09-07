@@ -2,6 +2,8 @@
 
 An **Omarchy** plugin built specifically for **Lenovo ThinkPads**, providing intuitive, fine-grained control over both **battery charge thresholds** (*Dual-Threshold Protection*).
 
+![preview](preview.png)
+
 ---
 
 ## Why ThinkPad Battery Protection?
