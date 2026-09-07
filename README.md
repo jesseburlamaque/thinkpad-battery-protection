@@ -98,23 +98,35 @@ so we can update this table and improve the plugin for everyone.
 
 ## Installation
 
-The project lives in `~/Projects/thinkpad-battery-protection`:
+### Quick Install (Recommended)
 
-1. **Link the plugin to Omarchy:**
-   ```bash
-   ln -s ~/Projects/thinkpad-battery-protection ~/.config/omarchy/plugins/jesseburlamaque.thinkpad-battery-protection
-   ```
+Run this single command in your terminal to install and configure everything in one step:
 
-2. **Install the system components (Polkit rules and systemd service):**
-   ```bash
-   cd ~/Projects/thinkpad-battery-protection
-   ./install.sh
-   ```
+```bash
+omarchy plugin add https://github.com/jesseburlamaque/thinkpad-battery-protection.git --enable && ~/.config/omarchy/plugins/jesseburlamaque.thinkpad-battery-protection/install.sh
+```
 
-3. **Reload the Omarchy shell:**
-   ```bash
-   omarchy-shell shell rescanPlugins
-   ```
+### Manual / Development Install
+
+If you prefer to clone the repository manually:
+
+```bash
+git clone https://github.com/jesseburlamaque/thinkpad-battery-protection.git
+cd thinkpad-battery-protection
+./install.sh
+```
+
+### Transparency: What does install.sh do?
+
+Battery charge thresholds operate directly on the Linux kernel hardware interface (`/sys/class/power_supply/BAT*/`), which requires elevated privileges to modify. Because Omarchy's `omarchy plugin add` intentionally never executes privileged code during download, `install.sh` handles system configuration with explicit user authentication:
+
+| Component | Destination | Purpose |
+|---|---|---|
+| **Helper scripts** | `/usr/local/libexec/tbp-helper`<br>`/usr/local/libexec/tbp-set` | Reads and writes threshold values to sysfs; verifies that callers originate from the authenticated desktop shell. |
+| **Systemd service** | `/etc/systemd/system/thinkpad-battery-protection.service` | Automatically restores your saved charge thresholds whenever the computer starts or reboots. |
+| **Polkit rule** | `/etc/polkit-1/rules.d/49-thinkpad-battery-protection.rules` | Authorizes the panel to adjust charge limits smoothly without asking for a password on every slider movement. |
+| **Configuration** | `/etc/thinkpad-battery-protection.conf` | Stores your preferred start and stop thresholds across reboots. |
+| **Menu entry** | `~/.config/omarchy/extensions/omarchy-menu.jsonc` | Adds the shortcut under **Trigger → Hardware → ThinkPad Battery Protection**. |
 
 ---
 
@@ -137,6 +149,19 @@ The project lives in `~/Projects/thinkpad-battery-protection`:
   # Example:
   sudo /usr/local/libexec/tbp-helper set 85 75
   ```
+
+---
+
+## Uninstallation
+
+To completely remove the plugin and all system components:
+
+```bash
+~/.config/omarchy/plugins/jesseburlamaque.thinkpad-battery-protection/uninstall.sh
+omarchy plugin remove jesseburlamaque.thinkpad-battery-protection
+```
+
+This disables and removes the systemd service, deletes the Polkit rule and helper scripts from `/usr/local/libexec`, cleans up the menu entry, and unregisters the plugin from Omarchy.
 
 ---
 

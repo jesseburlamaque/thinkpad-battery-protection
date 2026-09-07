@@ -7,14 +7,21 @@ if (( EUID != 0 )); then
   exit 77
 fi
 
+systemctl disable --now thinkpad-battery-protection.service 2>/dev/null || true
+rm -f -- /etc/systemd/system/thinkpad-battery-protection.service
 systemctl disable --now thinkcharge.service 2>/dev/null || true
 rm -f -- /etc/systemd/system/thinkcharge.service
 systemctl daemon-reload 2>/dev/null || true
 
+rm -f -- /etc/polkit-1/rules.d/49-thinkpad-battery-protection.rules
 rm -f -- /etc/polkit-1/rules.d/49-thinkcharge.rules
+rm -f -- /usr/local/libexec/tbp-helper
+rm -f -- /usr/local/libexec/tbp-set
+rm -f -- /usr/local/libexec/tbp-uninstall
 rm -f -- /usr/local/libexec/thinkcharge-helper
 rm -f -- /usr/local/libexec/thinkcharge-set
 rm -f -- /usr/local/libexec/thinkcharge-uninstall
+rm -f -- /etc/thinkpad-battery-protection.conf
 rm -f -- /etc/thinkcharge.conf
 
-echo "ThinkCharge system components removed successfully."
+echo "ThinkPad Battery Protection system components removed successfully."

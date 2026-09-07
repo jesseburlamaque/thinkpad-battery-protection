@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly HELPER="/usr/local/libexec/thinkcharge-helper"
+readonly HELPER="/usr/local/libexec/tbp-helper"
 readonly OMARCHY_SHELL="/usr/bin/quickshell"
 readonly OMARCHY_SHELL_CONFIG="/usr/share/omarchy/shell"
 

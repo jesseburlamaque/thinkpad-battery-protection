@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-readonly CONFIG_FILE="/etc/thinkcharge.conf"
-readonly LEGACY_CONFIG_FILE="/etc/omarchy-battery-health.conf"
+readonly CONFIG_FILE="/etc/thinkpad-battery-protection.conf"
+readonly LEGACY_CONFIG_FILE="/etc/thinkcharge.conf"
 readonly POWER_SUPPLY_ROOT="/sys/class/power_supply"
 readonly DEFAULT_STOP=85
 readonly DEFAULT_START=75
@@ -144,7 +144,7 @@ write_config() {
   local start_limit="${2:-}"
   local staged=""
 
-  staged=$(mktemp /etc/.thinkcharge.conf.XXXXXX)
+  staged=$(mktemp /etc/.thinkpad-battery-protection.conf.XXXXXX)
   {
     printf '%s\n' "$stop_limit"
     if [[ -n $start_limit ]]; then

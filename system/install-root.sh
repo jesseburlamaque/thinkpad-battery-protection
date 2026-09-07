@@ -27,7 +27,7 @@ install -m 0644 "$source_dir/system/thinkpad-battery-protection.service" /etc/sy
 install -m 0644 "$source_dir/system/49-thinkpad-battery-protection.rules" /etc/polkit-1/rules.d/49-thinkpad-battery-protection.rules
 
 # If configuration does not exist, initialize it
-if [[ ! -f /etc/thinkpad-battery-protection.conf ]]; then
+if [[ ! -f /etc/thinkpad-battery-protection.conf && ! -f /etc/thinkcharge.conf ]]; then
   /usr/local/libexec/tbp-helper set "$initial_stop" "$initial_start"
 else
   /usr/local/libexec/tbp-helper apply
